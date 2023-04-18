@@ -6,7 +6,7 @@ Next, the code declares a variable @sqlCommand and sets its value using the USE 
 
 The code then selects specific columns from various system tables and joins, using subqueries to calculate the data and log size in MB, free space in MB, compressed backup size in MB, and other database details. It orders the results by database name.
 
-Finally, the code drops the temporary table #FreeSpace. /*
+Finally, the code drops the temporary table #FreeSpace. */
 
 IF OBJECT_ID('tempdb..#FreeSpace') IS NOT NULL DROP TABLE #FreeSpace
  
