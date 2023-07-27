@@ -49,7 +49,7 @@ SELECT ('DROP ' +
         WHEN 'FN' THEN 'FUNCTION' 
         WHEN 'TF' THEN 'FUNCTION' 
         WHEN 'IF' THEN 'FUNCTION' 
-    END + ' ' + QUOTENAME('$dbname') + '.' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ';') COLLATE SQL_Latin1_General_CP1_CI_AS AS Sql
+    END + ' ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ';') COLLATE SQL_Latin1_General_CP1_CI_AS AS Sql
 FROM sys.all_objects
 WHERE schema_id = SCHEMA_ID('$schemaname') AND type IN ('V', 'P', 'FN', 'TF', 'IF')
 "@
