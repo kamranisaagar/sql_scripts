@@ -25,7 +25,7 @@ SELECT ('IF OBJECT_ID(''' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(
         WHEN 'FN' THEN 'FUNCTION' 
         WHEN 'TF' THEN 'FUNCTION' 
         WHEN 'IF' THEN 'FUNCTION' 
-    END + ' ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + '; ' +
+    END + ' ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ' GO ' +
     OBJECT_DEFINITION (OBJECT_ID) + ';') COLLATE SQL_Latin1_General_CP1_CI_AS AS Sql, 
     name COLLATE SQL_Latin1_General_CP1_CI_AS AS Name,
     CASE type 
