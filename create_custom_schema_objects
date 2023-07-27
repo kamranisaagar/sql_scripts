@@ -1,0 +1,66 @@
+param( 
+    [Parameter(Mandatory=$true)] 
+    [string]$hostname,
+    [Parameter(Mandatory=$true)] 
+    [string]$dbname,
+    [Parameter(Mandatory=$true)] 
+    [string]$schemaname,
+    [Parameter(Mandatory=$true)] 
+    [string]$outputDirectory
+)
+
+$connectionString = "Server=$hostname;Database=$dbname;Integrated Security=True;" 
+$connection = New-Object System.Data.SqlClient.SqlConnection($connectionString)
+$command = $connection.CreateCommand() 
+
+$command.CommandText = @"
+SELECT 'CREATE SCHEMA ' + QUOTENAME(SCHEMA_NAME) + ';' COLLATE SQL_Latin1_General_CP1_CI_AS AS Sql, SCHEMA_NAME COLLATE SQL_Latin1_General_CP1_CI_AS AS Name, 'SCH_' as Prefix
+FROM INFORMATION_SCHEMA.SCHEMATA
+WHERE SCHEMA_NAME = '$schemaname'
+UNION ALL
+SELECT ('IF OBJECT_ID(''' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ''', ''' + type + ''') IS NOT NULL DROP ' + 
+    CASE type 
+        WHEN 'V' THEN 'VIEW' 
+        WHEN 'P' THEN 'PROCEDURE' 
+        WHEN 'FN' THEN 'FUNCTION' 
+        WHEN 'TF' THEN 'FUNCTION' 
+        WHEN 'IF' THEN 'FUNCTION' 
+    END + ' ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + '; ' +
+    OBJECT_DEFINITION (OBJECT_ID) + ';') COLLATE SQL_Latin1_General_CP1_CI_AS AS Sql, 
+    name COLLATE SQL_Latin1_General_CP1_CI_AS AS Name,
+    CASE type 
+        WHEN 'V' THEN 'V_' 
+        WHEN 'P' THEN 'SP_' 
+        WHEN 'FN' THEN 'F_' 
+        WHEN 'TF' THEN 'F_' 
+        WHEN 'IF' THEN 'F_' 
+    END as Prefix
+FROM sys.all_objects
+WHERE schema_id = SCHEMA_ID('$schemaname') AND type IN ('V', 'P', 'FN', 'TF', 'IF')
+"@
+
+try { 
+    $connection.Open() 
+    $reader = $command.ExecuteReader()
+    while ($reader.Read()) { 
+        $reader["Sql"] | Out-File -FilePath ("$outputDirectory\" + $reader["Prefix"] + $reader["Name"] + ".sql")
+    } 
+} finally { 
+    $connection.Close() 
+}
+
+$command.CommandText = @"
+SELECT ('-- ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ' needs to be created manually.') COLLATE SQL_Latin1_General_CP1_CI_AS AS Sql
+FROM sys.tables
+WHERE schema_id = SCHEMA_ID('$schemaname')
+"@
+
+try { 
+    $connection.Open() 
+    $reader = $command.ExecuteReader()
+    while ($reader.Read()) { 
+        $reader["Sql"] | Out-File -Append -FilePath ("$outputDirectory\TablesToBeCreatedManually.sql")
+    } 
+} finally { 
+    $connection.Close() 
+}
